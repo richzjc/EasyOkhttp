@@ -14,7 +14,7 @@ import java.util.Map;
 public class SocketRequestServer {
 
     private final String K = " ";
-    private final String VIERSION = "HTTP/1.1";
+    private final String VIERSION = "HTTP/2.0";
     private final String GRGN = "\r\n";
 
     /**
