@@ -11,6 +11,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/custom_okhttp" />
+            <option value="$PROJECT_DIR$/easyokhttp" />
           </set>
         </option>
       </GradleProjectSettings>

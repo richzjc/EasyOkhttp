@@ -1,18 +1,17 @@
 package com.netease.custom_okhttp;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
-import com.netease.custom_okhttp.okhttp.Call2;
-import com.netease.custom_okhttp.okhttp.Callback2;
-import com.netease.custom_okhttp.okhttp.OkHttpClient2;
-import com.netease.custom_okhttp.okhttp.Request2;
-import com.netease.custom_okhttp.okhttp.RequestBody2;
-import com.netease.custom_okhttp.okhttp.Response2;
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
 
+import cn.richzjc.easyokhttp.Call2;
+import cn.richzjc.easyokhttp.Callback2;
+import cn.richzjc.easyokhttp.OkHttpClient2;
+import cn.richzjc.easyokhttp.Request2;
+import cn.richzjc.easyokhttp.Response2;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -85,6 +84,4 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
-
 }
