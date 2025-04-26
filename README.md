@@ -70,7 +70,8 @@ https://www.baidu.com
     int writeTimeout;
     int pingInterval;
    ```
-   
+
+   从过往的面试经历来看，经常会问到拦截器里面， `addInterceptor` 与 `addNetworkInterceptor`的区别， 你知道吗？
    
 3. 封装请求的Request
 4. 创建RealCall
