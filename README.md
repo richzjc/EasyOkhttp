@@ -51,7 +51,7 @@ https://www.baidu.com
 ---
 ### 分析源码是如何执行的
 
-1. 首先是创建OkhttpClient
+#### 1. 首先是创建OkhttpClient
    ```
     OkHttpClient client = new OkHttpClient.Builder().build();
    ```
@@ -73,7 +73,10 @@ https://www.baidu.com
 
    从过往的面试经历来看，经常会问到拦截器里面， `addInterceptor` 与 `addNetworkInterceptor`的区别， 你知道吗？
    
-3. 封装请求的Request
+##### 2. 封装请求的Request
+
+
+   
 4. 创建RealCall
 5. 调用异步方法
 6. 调用同步方法
