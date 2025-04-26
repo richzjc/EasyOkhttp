@@ -20,8 +20,10 @@ https://www.baidu.com
 
 ### okhttp里面比较重要的几个类
 
-`OkhttpClient`
-`Request`
-`RealCall`
-`Dispatcher`
-`Interceptor`
+`OkhttpClient`：通过 OkHttpClient 定义全局参数。
+`Request`：Request 封装请求细节
+`RealCall`：RealCall 触发执行
+`Dispatcher`：Dispatcher 管理线程池和队列
+`Interceptor`：Interceptor 链依次处理请求和响应（如缓存、压缩）。
+`Cache`：Cache 和连接池优化性能
+`Excutors`：Executors 确保线程高效复用
