@@ -52,11 +52,33 @@ https://www.baidu.com
 ### 分析源码是如何执行的
 
 1. 首先是创建OkhttpClient
-2. 封装请求的Request
-3. 创建RealCall
-4. 调用异步方法
-5. 调用同步方法
-6. 调用责任链
-7. 分析缓存的逻辑
-8. 分析底层的网络请求
+   ```
+    OkHttpClient client = new OkHttpClient.Builder().build();
+   ```
+   OkhttpClient是通过构造者设计模式创建的
+
+   Builder里面的参数有许多， 重点列举如下几个，其它的我也不懂：
+   ```
+    Dispatcher dispatcher;
+    final List<Interceptor> interceptors = new ArrayList<>();
+    final List<Interceptor> networkInterceptors = new ArrayList<>();
+    @Nullable SSLSocketFactory sslSocketFactory;
+    HostnameVerifier hostnameVerifier;
+    ConnectionPool connectionPool;
+    Dns dns;
+    int connectTimeout;
+    int readTimeout;
+    int writeTimeout;
+    int pingInterval;
+
+   ```
+   
+   
+3. 封装请求的Request
+4. 创建RealCall
+5. 调用异步方法
+6. 调用同步方法
+7. 调用责任链
+8. 分析缓存的逻辑
+9. 分析底层的网络请求
    
