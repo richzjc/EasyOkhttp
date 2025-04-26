@@ -59,18 +59,16 @@ https://www.baidu.com
 
    Builder里面的参数有许多， 重点列举如下几个，其它的我也不懂：
    ```
-    Dispatcher dispatcher;
-    final List<Interceptor> interceptors = new ArrayList<>();
-    final List<Interceptor> networkInterceptors = new ArrayList<>();
+    Dispatcher dispatcher; // 调度器，在整个网络请求中拌演着重要的作用
+    final List<Interceptor> interceptors = new ArrayList<>(); //拦截器，在执行网络之前执行
+    final List<Interceptor> networkInterceptors = new ArrayList<>(); //网络请求的拦截器
     @Nullable SSLSocketFactory sslSocketFactory;
-    HostnameVerifier hostnameVerifier;
     ConnectionPool connectionPool;
     Dns dns;
     int connectTimeout;
     int readTimeout;
     int writeTimeout;
     int pingInterval;
-
    ```
    
    
