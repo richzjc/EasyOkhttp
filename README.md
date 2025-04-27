@@ -160,8 +160,115 @@ private int maxRequests = 64;
 private int maxRequestsPerHost = 5;
 ```
 
-6. 调用同步方法
-7. 调用责任链
-8. 分析缓存的逻辑
-9. 分析底层的网络请求
+#### 6. Dispatcher处理之后，回调到RealCall
+从之前的代码分析，调用Dispatcher的enqueue(AsyncCall call)方法，传入的是AsyncCall对象。而AsyncCall是实现了Runnable接口的。
+因此得到结论，最终会执行AsyncCall的run()方法。并且AsyncCall作为RealCall的内部类，所以AsyncCall是持有RealCall的引用。
+看一下真正run方法的代码, execute()方法是在父类的run()方法里面调用的：
+```
+    @Override protected void execute() {
+      boolean signalledCallback = false;
+      try {
+        Response response = getResponseWithInterceptorChain();
+        if (retryAndFollowUpInterceptor.isCanceled()) {
+          signalledCallback = true;
+          responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
+        } else {
+          signalledCallback = true;
+          responseCallback.onResponse(RealCall.this, response);
+        }
+      } catch (IOException e) {
+        if (signalledCallback) {
+          // Do not signal the callback twice!
+          Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
+        } else {
+          eventListener.callFailed(RealCall.this, e);
+          responseCallback.onFailure(RealCall.this, e);
+        }
+      } finally {
+        client.dispatcher().finished(this);
+      }
+    }
+  }
+```
+从上面的代码能清楚的看到了` Response response = getResponseWithInterceptorChain();`
+这句代码是通过真正的责任链模式去获取网络请求结果。
+
+#### 7. 分析责任链模式
+责任链的代码如下： 
+```
+  Response getResponseWithInterceptorChain() throws IOException {
+    // Build a full stack of interceptors.
+    List<Interceptor> interceptors = new ArrayList<>();
+    interceptors.addAll(client.interceptors());
+    interceptors.add(retryAndFollowUpInterceptor);
+    interceptors.add(new BridgeInterceptor(client.cookieJar()));
+    interceptors.add(new CacheInterceptor(client.internalCache()));
+    interceptors.add(new ConnectInterceptor(client));
+    if (!forWebSocket) {
+      interceptors.addAll(client.networkInterceptors());
+    }
+    interceptors.add(new CallServerInterceptor(forWebSocket));
+
+    Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null, null, 0,
+        originalRequest, this, eventListener, client.connectTimeoutMillis(),
+        client.readTimeoutMillis(), client.writeTimeoutMillis());
+
+    return chain.proceed(originalRequest);
+  }
+```
+现在从上面的代码应该能分析出，addInterceptor()与addNetworkInterceptor的区别了吧，
+因为这两者拦截器在责任链里面添加的位置都不同。
+
+源码里面的拦截器就上面几种。抛开缓存，在学获取网络的数据是通过拦截器：CallServerInterceptor来实现的。
+接下来分析一下CallServerInterceptor:
+
+#### 8. CallServerInterceptor的实现
+CallServerInterceptor是真正的获取网络流的逻辑。而底层的代码最终还是通过Java的socket类来实现的， 
+只不过在Okhttp底层又做了一些处理，包括Http的1.0版本与Http2.0版本的判断逻辑。
+
+从代码逻辑看应该是： 
+`CallServerInterceptor -> HttpCodeC -> RealConnection`
+
+RealConnection就会涉及到Socket的相关处理逻辑。
+
+#### 9. 缓存拦截器
+
+Okhttp里面的缓存拦截器，里面比较重要的一个类`CacheStrategy`,这里面涉及到Etag， Cache-control等相关的缓存处理。
+源码如下： 
+```
+    public Factory(long nowMillis, Request request, Response cacheResponse) {
+      this.nowMillis = nowMillis;
+      this.request = request;
+      this.cacheResponse = cacheResponse;
+
+      if (cacheResponse != null) {
+        this.sentRequestMillis = cacheResponse.sentRequestAtMillis();
+        this.receivedResponseMillis = cacheResponse.receivedResponseAtMillis();
+        Headers headers = cacheResponse.headers();
+        for (int i = 0, size = headers.size(); i < size; i++) {
+          String fieldName = headers.name(i);
+          String value = headers.value(i);
+          if ("Date".equalsIgnoreCase(fieldName)) {
+            servedDate = HttpDate.parse(value);
+            servedDateString = value;
+          } else if ("Expires".equalsIgnoreCase(fieldName)) {
+            expires = HttpDate.parse(value);
+          } else if ("Last-Modified".equalsIgnoreCase(fieldName)) {
+            lastModified = HttpDate.parse(value);
+            lastModifiedString = value;
+          } else if ("ETag".equalsIgnoreCase(fieldName)) {
+            etag = value;
+          } else if ("Age".equalsIgnoreCase(fieldName)) {
+            ageSeconds = HttpHeaders.parseSeconds(value, -1);
+          }
+        }
+      }
+    }
+```
+
+## 总结
+
+其实掌握了异步网络请求调用顺序后， 对于同步请求， websocket的原理，就比较好理解了。
+
+
    
