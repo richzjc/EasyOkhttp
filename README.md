@@ -74,11 +74,44 @@ https://www.baidu.com
    从过往的面试经历来看，经常会问到拦截器里面， `addInterceptor` 与 `addNetworkInterceptor`的区别， 你知道吗？
    
 ##### 2. 封装请求的Request
+```
+ Request request = new Request.Builder().url(PATH).build();
+```
+其实构建Request是比较简单的， 也是通过构造者模式构建的。主要参数有如下几个： 
+```
+    HttpUrl url; //请求地址 
+    String method; //请求方式，是get请求还是post请求
+    Headers.Builder headers; //请求头
+    RequestBody body; //请求体
+    Object tag;
+```
+##### 3. 创建RealCall
+真正调用请求的代码是在RealCall里面执行的， RealCall是通过OkhttpClient与Request创建出来的， 代码如下： 
+```
+Call call = okHttpClient.newCall(request);
 
+源码如下：
+  @Override public Call newCall(Request request) {
+    return RealCall.newRealCall(this, request, false);
+  }
+```
 
-   
-4. 创建RealCall
-5. 调用异步方法
+RealCall做为OkhttpClient的内部类，其内部持有属性有： 
+```
+final class RealCall implements Call {
+  final OkHttpClient client; 
+  final RetryAndFollowUpInterceptor retryAndFollowUpInterceptor;
+  private EventListener eventListener;
+  final Request originalRequest;
+  final boolean forWebSocket; //标记是否是websocket
+  private boolean executed; //标记当前请求是否已经执行
+```
+##### 4. 调用异步方法
+构造出了RealCall对象， 这时可以调用RealCall的同步执行与异步执行的代码。
+```
+
+```
+
 6. 调用同步方法
 7. 调用责任链
 8. 分析缓存的逻辑
