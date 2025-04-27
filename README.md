@@ -105,11 +105,59 @@ final class RealCall implements Call {
   final Request originalRequest;
   final boolean forWebSocket; //标记是否是websocket
   private boolean executed; //标记当前请求是否已经执行
+}
 ```
 ##### 4. 调用异步方法
 构造出了RealCall对象， 这时可以调用RealCall的同步执行与异步执行的代码。
 ```
+  @Override public void enqueue(Callback responseCallback) {
+    synchronized (this) {
+      if (executed) throw new IllegalStateException("Already Executed");
+      executed = true;
+    }
+    captureCallStackTrace();
+    eventListener.callStart(this);
+    client.dispatcher().enqueue(new AsyncCall(responseCallback));
+  }
+```
+对于异步执行的代码，其实是通过OkhttpClient的调度器来实现的，内部通过线程池来实现的。
+接下来分析一下，`client.dispatcher().enqueue(new AsyncCall(responseCallback));`
+这句代码到底是做了哪些事情。
 
+##### 5. Dispatcher的分析，包括线程池
+首先看一下Dispacher里面的如下代码： 
+```
+  synchronized void enqueue(AsyncCall call) {
+    if (runningAsyncCalls.size() < maxRequests && runningCallsForHost(call) < maxRequestsPerHost) {
+      runningAsyncCalls.add(call);
+      executorService().execute(call);
+    } else {
+      readyAsyncCalls.add(call);
+    }
+  }
+```
+Dispatcher里面维护了3个双端队列， runningAsyncCalls表示正在执行的队列， readyAsyncCalls表示正在执行的队列。 runningSyncCalls表示同步执行的队列
+代码如下：
+```
+  private final Deque<AsyncCall> readyAsyncCalls = new ArrayDeque<>();
+  private final Deque<AsyncCall> runningAsyncCalls = new ArrayDeque<>();
+  private final Deque<RealCall> runningSyncCalls = new ArrayDeque<>();
+```
+请求添加到队列后， 是通过线程池调用执行真正请求后端接口：
+```
+  public synchronized ExecutorService executorService() {
+    if (executorService == null) {
+      executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
+          new SynchronousQueue<Runnable>(), Util.threadFactory("OkHttp Dispatcher", false));
+    }
+    return executorService;
+  }
+```
+关于线程池，源码里面有涉及到最大请求数不能超过64， 也就是runningAsyncCalls的最大长度不能超过64。
+另外就是单个域名的最大请求数不能超过5。 Dispatcher类里面明确声明：
+```
+private int maxRequests = 64;
+private int maxRequestsPerHost = 5;
 ```
 
 6. 调用同步方法
