@@ -96,7 +96,7 @@ Call call = okHttpClient.newCall(request);
   }
 ```
 
-RealCall做为OkhttpClient的内部类，其内部持有属性有： 
+RealCall其内部持有属性有： 
 ```
 final class RealCall implements Call {
   final OkHttpClient client; 
